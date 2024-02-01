@@ -10,11 +10,22 @@ export default defineConfig({
   // Files to exclude
   exclude: [],
 
-  // Useful for theme customization
-  theme: {
-    extend: {},
-  },
+    // Useful for theme customization
+    theme: {
+        extend: {}
+      },
 
-  // The output directory for your css system
-  outdir: "styled-system",
+      globalCss: {
+          body: {
+            // bg: "slate.900",
+          },
+        },
+
+      // The output directory for your css system
+      outdir: "styled-system",
+      conditions: {
+        extend: {
+          groupHover: "[role=group]:where(:hover, [data-hover]) & ",
+        },
+      },
 });

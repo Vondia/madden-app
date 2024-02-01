@@ -1,3 +1,4 @@
+import { TeamBannerSchedule } from '@/components/TeamBannerSchedule';
 import { css } from '../../styled-system/css';
 import { promises as fs } from 'fs';
 
@@ -89,8 +90,18 @@ export default async function Home() {
                             weekData && weekData.map((game: Game, j: number) => (
                                 <tr key={j}>
                                     {j === 0 && <td rowSpan={weekData.length} className={css({ verticalAlign: 'top', textAlign: 'center' })}>{game.weekIndex + 1}</td>}
-                                    <td>{getTeamNameById(game.awayTeamId)}</td>
-                                    <td>{getTeamNameById(game.homeTeamId)}</td>
+                                    <td>
+                                    <TeamBannerSchedule
+                                    result={game.awayScore > game.homeScore ? 'win' : game.awayScore < game.homeScore ? 'loss' : 'tie'}
+                                    teamName={getTeamNameById(game.awayTeamId)}
+                                    />
+                                    </td>
+                                    <td>
+                                    <TeamBannerSchedule
+                                    result={game.homeScore > game.awayScore ? 'win' : game.homeScore < game.awayScore ? 'loss' : 'tie'}
+                                    teamName={getTeamNameById(game.homeTeamId)}
+                                    />
+                                    </td>
                                     <td>{`${game.awayScore} - ${game.homeScore}`}</td>
                                 </tr>
                             ))
