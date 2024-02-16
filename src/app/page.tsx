@@ -2,6 +2,7 @@
 import { TeamBannerSchedule } from '@/components/TeamBannerSchedule'
 import { css } from '../../styled-system/css'
 import useSWR from 'swr'
+import { FC, useState } from 'react'
 import { Pagination } from '@/components/ui/Pagination'
 
 type TeamId = number
@@ -24,7 +25,8 @@ type WeekData = Game[]
 // Write a fetcher function to wrap the native fetch function and return the result of a call to the URL in JSON format
 const fetcher = (url: string): Promise<any> =>
   fetch(url).then(res => res.json())
-export default function Home() {
+
+const Home: FC = () => {
   const { data, error, isLoading } = useSWR('/api/staticdata', fetcher)
 
   const teamIdToName: TeamIdToName = {
@@ -66,18 +68,32 @@ export default function Home() {
     return teamIdToName[teamId] || `Unknown Team (${teamId})`
   }
 
-  const pageSize = 1 // Adjust as needed
+  const pageSize = 1 // Display one weekIndex at a time
 
-  const totalPages = data?.reg ? Math.ceil(data.reg.length / pageSize) : 0
-  console.log(totalPages)
+  const [currentPage, setCurrentPage] = useState(0)
+
+  // Calculate the total number of unique weekIndex values
+  const uniqueWeekIndices = new Set(
+    data?.reg.flatMap((weekData: WeekData) =>
+      weekData.map(game => game.weekIndex)
+    )
+  )
+  const totalPages = uniqueWeekIndices.size
+
   const handlePageChange = (newPage: number) => {
-    console.log('New page:', newPage)
+    setCurrentPage(newPage)
   }
 
   if (error) return <div>Failed to load</div>
 
   if (isLoading) return <div>Loading...</div>
-  console.log(data.reg)
+
+  // Filter games for the current page (weekIndex)
+  const filteredGames = data?.reg.filter((weekData: WeekData) => {
+    const weekIndices = weekData.map(game => game.weekIndex)
+    return new Set(weekIndices).has(currentPage)
+  })
+
   return (
     <>
       <div
@@ -102,59 +118,56 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {data?.reg.map(
-              (weekData: WeekData) =>
-                weekData &&
-                weekData.map((game: Game, j: number) => (
-                  <tr key={j}>
-                    {j === 0 && (
-                      <td
-                        rowSpan={weekData.length}
-                        className={css({
-                          verticalAlign: 'top',
-                          textAlign: 'center',
-                        })}
-                      >
-                        {game.weekIndex + 1}
-                      </td>
-                    )}
-                    <td>
-                      <TeamBannerSchedule
-                        result={
-                          game.awayScore > game.homeScore
-                            ? 'win'
-                            : game.awayScore < game.homeScore
-                            ? 'loss'
-                            : 'tie'
-                        }
-                        teamName={getTeamNameById(game.awayTeamId)}
-                      />
+            {filteredGames.map((weekData: WeekData) =>
+              weekData.map((game: Game, j: number) => (
+                <tr key={j}>
+                  {j === 0 && (
+                    <td
+                      rowSpan={weekData.length}
+                      className={css({
+                        verticalAlign: 'top',
+                        textAlign: 'center',
+                      })}
+                    >
+                      {game.weekIndex + 1}
                     </td>
-                    <td>
-                      <TeamBannerSchedule
-                        result={
-                          game.homeScore > game.awayScore
-                            ? 'win'
-                            : game.homeScore < game.awayScore
-                            ? 'loss'
-                            : 'tie'
-                        }
-                        teamName={getTeamNameById(game.homeTeamId)}
-                      />
-                    </td>
-                    <td>{`${game.awayScore} - ${game.homeScore}`}</td>
-                  </tr>
-                ))
+                  )}
+                  <td>
+                    <TeamBannerSchedule
+                      result={
+                        game.awayScore > game.homeScore
+                          ? 'win'
+                          : game.awayScore < game.homeScore
+                          ? 'loss'
+                          : 'tie'
+                      }
+                      teamName={getTeamNameById(game.awayTeamId)}
+                    />
+                  </td>
+                  <td>
+                    <TeamBannerSchedule
+                      result={
+                        game.homeScore > game.awayScore
+                          ? 'win'
+                          : game.homeScore < game.awayScore
+                          ? 'loss'
+                          : 'tie'
+                      }
+                      teamName={getTeamNameById(game.homeTeamId)}
+                    />
+                  </td>
+                  <td>{`${game.awayScore} - ${game.homeScore}`}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
       <div>
-        <Pagination
-          totalPages={data?.reg.length}
-          onPageChange={handlePageChange}
-        />
+        <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </>
   )
 }
+
+export default Home
