@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import useSWR from 'swr'
 import { FC, useState } from 'react'
 import { Pagination } from '@/components/ui/Pagination'
+import { useRouter } from 'next/navigation'
 
 type TeamId = number
 
@@ -79,9 +80,13 @@ const Home: FC = () => {
     )
   )
   const totalPages = uniqueWeekIndices.size
+  const router = useRouter()
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage)
+
+    // Update the URL query parameter
+    router.push(`?week${newPage + 1}`)
   }
 
   if (error) return <div>Failed to load</div>
@@ -96,17 +101,6 @@ const Home: FC = () => {
 
   return (
     <>
-      <div
-        className={css({
-          mt: '4',
-          fontSize: 'xl',
-          fontWeight: 'semibold',
-          bg: { base: 'gray.50', _hover: 'gray.200' },
-          lg: { fontSize: '2xl' },
-        })}
-      >
-        Panda CSS is the best.
-      </div>
       <div>
         <table>
           <thead>
@@ -163,9 +157,12 @@ const Home: FC = () => {
           </tbody>
         </table>
       </div>
-      <div>
-        <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
-      </div>
+
+      <Pagination
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+      />
     </>
   )
 }
